@@ -1,0 +1,427 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>اختبار الرهاب الاجتماعي - Social Anxiety Test</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Open Sans', Arial, sans-serif;
+            background-color: #cce6ff;
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+            transition: all 0.3s ease;
+        }
+
+        .container {
+            background: white;
+            border-radius: 10px;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+            padding: 40px;
+            max-width: 600px;
+            width: 100%;
+            text-align: center;
+            position: relative;
+        }
+
+        .lang-toggle {
+            position: absolute;
+            top: 20px;
+            right: 20px;
+            background: white;
+            border: 2px solid #007BFF;
+            border-radius: 5px;
+            padding: 8px 15px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            font-size: 14px;
+        }
+
+        .lang-toggle:hover {
+            background: #007BFF;
+            color: white;
+        }
+
+        h1 {
+            color: #333;
+            margin-bottom: 20px;
+            font-size: 2.2em;
+        }
+
+        .description {
+            color: #666;
+            margin-bottom: 30px;
+            font-size: 1.1em;
+            line-height: 1.6;
+        }
+
+        .start-btn, .answer-btn, .retake-btn {
+            background: white;
+            border: 2px solid #007BFF;
+            border-radius: 8px;
+            padding: 15px 30px;
+            font-size: 1.1em;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            margin: 10px;
+        }
+
+        .start-btn:hover, .answer-btn:hover, .retake-btn:hover {
+            background: #007BFF;
+            color: white;
+        }
+
+        .question-container {
+            display: none;
+        }
+
+        .question-text {
+            font-size: 1.3em;
+            margin-bottom: 30px;
+            color: #333;
+            line-height: 1.5;
+        }
+
+        .answer-buttons {
+            display: flex;
+            justify-content: center;
+            gap: 20px;
+            flex-wrap: wrap;
+        }
+
+        .answer-btn {
+            min-width: 120px;
+        }
+
+        .result-container {
+            display: none;
+        }
+
+        .score {
+            font-size: 3em;
+            color: #007BFF;
+            margin-bottom: 20px;
+            font-weight: bold;
+        }
+
+        .result-description {
+            font-size: 1.2em;
+            margin-bottom: 20px;
+            color: #333;
+            line-height: 1.6;
+        }
+
+        .disclaimer {
+            font-size: 0.9em;
+            color: #666;
+            margin-bottom: 30px;
+            font-style: italic;
+        }
+
+        .progress {
+            background: #f0f0f0;
+            border-radius: 10px;
+            height: 8px;
+            margin-bottom: 20px;
+            overflow: hidden;
+        }
+
+        .progress-bar {
+            background: #007BFF;
+            height: 100%;
+            transition: width 0.3s ease;
+        }
+
+        .question-number {
+            color: #666;
+            font-size: 0.9em;
+            margin-bottom: 10px;
+        }
+
+        @media (max-width: 768px) {
+            .container {
+                padding: 20px;
+            }
+            
+            h1 {
+                font-size: 1.8em;
+            }
+            
+            .lang-toggle {
+                position: static;
+                margin-bottom: 20px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <button class="lang-toggle" onclick="toggleLanguage()" id="langToggle">English</button>
+        
+        <!-- الصفحة الرئيسية -->
+        <div id="homepage">
+            <h1 id="mainTitle">هل تعاني من الرهاب الاجتماعي؟</h1>
+            <p class="description" id="mainDescription">أجب عن 40 سؤالًا لتعرف مدى مستوى الرهاب الاجتماعي لديك.</p>
+            <button class="start-btn" onclick="startTest()" id="startBtn">ابدأ الاختبار</button>
+        </div>
+
+        <!-- صفحة الاختبار -->
+        <div class="question-container" id="questionContainer">
+            <div class="question-number" id="questionNumber">السؤال 1 من 40</div>
+            <div class="progress">
+                <div class="progress-bar" id="progressBar"></div>
+            </div>
+            <div class="question-text" id="questionText"></div>
+            <div class="answer-buttons">
+                <button class="answer-btn" onclick="answerQuestion(true)" id="yesBtn">نعم</button>
+                <button class="answer-btn" onclick="answerQuestion(false)" id="noBtn">لا</button>
+            </div>
+        </div>
+
+        <!-- صفحة النتيجة -->
+        <div class="result-container" id="resultContainer">
+            <div class="score" id="scoreDisplay">85%</div>
+            <div class="result-description" id="resultDescription"></div>
+            <div class="disclaimer" id="disclaimer">هذا الاختبار للتقييم الذاتي فقط.</div>
+            <button class="retake-btn" onclick="retakeTest()" id="retakeBtn">أعد المحاولة</button>
+        </div>
+    </div>
+
+    <script>
+        let currentLanguage = 'ar';
+        let currentQuestionIndex = 0;
+        let yesAnswers = 0;
+        let isTestStarted = false;
+
+        const questions = {
+            ar: [
+                "هل تشعر بالقلق عند مقابلة أشخاص جدد؟",
+                "هل تتجنب المناسبات الاجتماعية؟",
+                "هل تشعر بالخجل عند التحدث أمام مجموعة؟",
+                "هل تقلق من أن يحكم عليك الآخرون بسلبية؟",
+                "هل تشعر بالتوتر عند الأكل أمام الناس؟",
+                "هل تتجنب الاتصال البصري مع الآخرين؟",
+                "هل تخاف من أن تقول شيئًا محرجًا؟",
+                "هل تشعر بالقلق عند استخدام الهاتف أمام الآخرين؟",
+                "هل تتجنب المشاركة في المناقشات الجماعية؟",
+                "هل تشعر بالتوتر عند دخول غرفة مليئة بالناس؟",
+                "هل تقلق من أن يلاحظ الآخرون أعراض قلقك؟",
+                "هل تتجنب الذهاب إلى المطاعم المزدحمة؟",
+                "هل تشعر بالخجل عند طلب المساعدة من الآخرين؟",
+                "هل تتجنب التحدث مع الأشخاص ذوي السلطة؟",
+                "هل تشعر بالقلق عند الكتابة أمام الآخرين؟",
+                "هل تتجنب الحفلات أو التجمعات الاجتماعية؟",
+                "هل تشعر بالتوتر عند التحدث مع الجنس الآخر؟",
+                "هل تخاف من أن تبدو غبيًا أمام الآخرين؟",
+                "هل تتجنب التعبير عن رأيك في المواقف الاجتماعية؟",
+                "هل تشعر بالقلق عند الوقوف في الصفوف؟",
+                "هل تتجنب العمل في مجموعات؟",
+                "هل تشعر بالتوتر عند التحدث مع الغرباء؟",
+                "هل تقلق من أن يرفضك الآخرون؟",
+                "هل تتجنب الأنشطة التي تتطلب التفاعل مع الآخرين؟",
+                "هل تشعر بالخجل عند الرقص أو الغناء أمام الآخرين؟",
+                "هل تتجنب التحدث في الاجتماعات؟",
+                "هل تشعر بالقلق عند إعطاء عنوانك أو معلوماتك الشخصية؟",
+                "هل تتجنب التحدث مع زملائك في العمل أو المدرسة؟",
+                "هل تشعر بالتوتر عند الدفاع عن نفسك؟",
+                "هل تتجنب الذهاب إلى المقابلات الشخصية؟",
+                "هل تشعر بالقلق عند استخدام الحمامات العامة؟",
+                "هل تتجنب المشاركة في الأنشطة الرياضية الجماعية؟",
+                "هل تشعر بالخجل عند ارتداء ملابس جديدة؟",
+                "هل تتجنب التحدث مع الجيران؟",
+                "هل تشعر بالتوتر عند التسوق في المتاجر المزدحمة؟",
+                "هل تتجنب الذهاب إلى الطبيب أو طبيب الأسنان؟",
+                "هل تشعر بالقلق عند التحدث في الهاتف مع أشخاص لا تعرفهم؟",
+                "هل تتجنب التحدث مع المعلمين أو الأساتذة؟",
+                "هل تشعر بالتوتر عند التواجد في المصاعد مع الآخرين؟",
+                "هل تتجنب الذهاب إلى المناسبات العائلية الكبيرة؟"
+            ],
+            en: [
+                "Do you feel anxious when meeting new people?",
+                "Do you avoid social gatherings?",
+                "Do you feel embarrassed when speaking in front of a group?",
+                "Do you worry that others will judge you negatively?",
+                "Do you feel nervous when eating in front of people?",
+                "Do you avoid eye contact with others?",
+                "Are you afraid of saying something embarrassing?",
+                "Do you feel anxious when using the phone in front of others?",
+                "Do you avoid participating in group discussions?",
+                "Do you feel nervous when entering a room full of people?",
+                "Do you worry that others will notice your anxiety symptoms?",
+                "Do you avoid going to crowded restaurants?",
+                "Do you feel embarrassed when asking others for help?",
+                "Do you avoid speaking with people in authority?",
+                "Do you feel anxious when writing in front of others?",
+                "Do you avoid parties or social gatherings?",
+                "Do you feel nervous when talking to the opposite sex?",
+                "Are you afraid of looking stupid in front of others?",
+                "Do you avoid expressing your opinion in social situations?",
+                "Do you feel anxious when standing in lines?",
+                "Do you avoid working in groups?",
+                "Do you feel nervous when talking to strangers?",
+                "Do you worry that others will reject you?",
+                "Do you avoid activities that require interaction with others?",
+                "Do you feel embarrassed when dancing or singing in front of others?",
+                "Do you avoid speaking in meetings?",
+                "Do you feel anxious when giving your address or personal information?",
+                "Do you avoid talking to your coworkers or classmates?",
+                "Do you feel nervous when defending yourself?",
+                "Do you avoid going to job interviews?",
+                "Do you feel anxious when using public restrooms?",
+                "Do you avoid participating in group sports activities?",
+                "Do you feel embarrassed when wearing new clothes?",
+                "Do you avoid talking to your neighbors?",
+                "Do you feel nervous when shopping in crowded stores?",
+                "Do you avoid going to the doctor or dentist?",
+                "Do you feel anxious when talking on the phone with people you don't know?",
+                "Do you avoid speaking with teachers or professors?",
+                "Do you feel nervous when being in elevators with others?",
+                "Do you avoid going to large family gatherings?"
+            ]
+        };
+
+        const texts = {
+            ar: {
+                mainTitle: "هل تعاني من الرهاب الاجتماعي؟",
+                mainDescription: "أجب عن 40 سؤالًا لتعرف مدى مستوى الرهاب الاجتماعي لديك.",
+                startBtn: "ابدأ الاختبار",
+                yesBtn: "نعم",
+                noBtn: "لا",
+                retakeBtn: "أعد المحاولة",
+                disclaimer: "هذا الاختبار للتقييم الذاتي فقط.",
+                questionNumber: "السؤال {current} من 40",
+                results: {
+                    mild: "قلق اجتماعي خفيف أو غير موجود",
+                    moderate: "قلق اجتماعي متوسط", 
+                    severe: "قلق اجتماعي شديد"
+                }
+            },
+            en: {
+                mainTitle: "Do You Have Social Anxiety?",
+                mainDescription: "Take this 40-question test to discover your level of social anxiety.",
+                startBtn: "Start Test",
+                yesBtn: "Yes",
+                noBtn: "No",
+                retakeBtn: "Retake Test",
+                disclaimer: "This test is for self-assessment only.",
+                questionNumber: "Question {current} of 40",
+                results: {
+                    mild: "Very Mild or No Anxiety",
+                    moderate: "Moderate Social Anxiety",
+                    severe: "Severe Social Anxiety"
+                }
+            }
+        };
+
+        function toggleLanguage() {
+            currentLanguage = currentLanguage === 'ar' ? 'en' : 'ar';
+            updateLanguage();
+        }
+
+        function updateLanguage() {
+            const body = document.body;
+            const html = document.documentElement;
+            
+            if (currentLanguage === 'ar') {
+                html.setAttribute('lang', 'ar');
+                html.setAttribute('dir', 'rtl');
+                document.getElementById('langToggle').textContent = 'English';
+            } else {
+                html.setAttribute('lang', 'en');
+                html.setAttribute('dir', 'ltr');
+                document.getElementById('langToggle').textContent = 'عربي';
+            }
+
+            const currentTexts = texts[currentLanguage];
+            
+            document.getElementById('mainTitle').textContent = currentTexts.mainTitle;
+            document.getElementById('mainDescription').textContent = currentTexts.mainDescription;
+            document.getElementById('startBtn').textContent = currentTexts.startBtn;
+            document.getElementById('yesBtn').textContent = currentTexts.yesBtn;
+            document.getElementById('noBtn').textContent = currentTexts.noBtn;
+            document.getElementById('retakeBtn').textContent = currentTexts.retakeBtn;
+            document.getElementById('disclaimer').textContent = currentTexts.disclaimer;
+
+            if (isTestStarted) {
+                updateQuestion();
+            }
+        }
+
+        function startTest() {
+            isTestStarted = true;
+            document.getElementById('homepage').style.display = 'none';
+            document.getElementById('questionContainer').style.display = 'block';
+            currentQuestionIndex = 0;
+            yesAnswers = 0;
+            updateQuestion();
+        }
+
+        function updateQuestion() {
+            const questionText = questions[currentLanguage][currentQuestionIndex];
+            const currentTexts = texts[currentLanguage];
+            
+            document.getElementById('questionText').textContent = questionText;
+            document.getElementById('questionNumber').textContent = 
+                currentTexts.questionNumber.replace('{current}', currentQuestionIndex + 1);
+            
+            const progress = ((currentQuestionIndex + 1) / 40) * 100;
+            document.getElementById('progressBar').style.width = progress + '%';
+        }
+
+        function answerQuestion(isYes) {
+            if (isYes) {
+                yesAnswers++;
+            }
+            
+            currentQuestionIndex++;
+            
+            if (currentQuestionIndex < 40) {
+                updateQuestion();
+            } else {
+                showResult();
+            }
+        }
+
+        function showResult() {
+            const percentage = Math.round((yesAnswers / 40) * 100);
+            const currentTexts = texts[currentLanguage];
+            
+            document.getElementById('questionContainer').style.display = 'none';
+            document.getElementById('resultContainer').style.display = 'block';
+            
+            document.getElementById('scoreDisplay').textContent = percentage + '%';
+            
+            let resultDescription;
+            if (percentage <= 30) {
+                resultDescription = currentTexts.results.mild;
+            } else if (percentage <= 60) {
+                resultDescription = currentTexts.results.moderate;
+            } else {
+                resultDescription = currentTexts.results.severe;
+            }
+            
+            document.getElementById('resultDescription').textContent = resultDescription;
+        }
+
+        function retakeTest() {
+            isTestStarted = false;
+            document.getElementById('resultContainer').style.display = 'none';
+            document.getElementById('homepage').style.display = 'block';
+            currentQuestionIndex = 0;
+            yesAnswers = 0;
+        }
+
+        // Initialize the page
+        updateLanguage();
+    </script>
+</body>
+</html>
